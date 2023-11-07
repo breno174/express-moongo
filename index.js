@@ -2,40 +2,61 @@ const express = require('express');
 const connectDB = require("./database");
 const mongoose = require("mongoose");
 
-const Item = require('./models')
+const { Livro, Pedido, Usuario } = require('./models'); 
 const app = express();
+app.use(express.json())
 
-const port = 3000;
+const port = 3004;
 
-// Defina uma rota básica
 app.get('/', (req, res) => {
   res.send('Bem-vindo à minha aplicação Express com MongoDB!');
 });
 
-app.get('/createBook', async (req, res) => {
+app.post('/createLivro', async (req, res) => {
+  console.log("body: ", req.body)
   try {
-    // const Item = mongoose.model('Item'); // Importe o modelo de dados (se necessário)
-    const novo = new Item({name: "livro", description: "fantasia"});
-    await novo.save()
-    const items = await Item.find();
-    res.json(items);
+    const { title, description, author, data } = req.body;
+    const novoLivro = new Livro({ title, description, author, data });
+    await novoLivro.save();
+    const livros = await Livro.find();
+    res.json(livros);
   } catch (err) {
-    console.error('Erro ao buscar itens: ' + err);
-    res.status(500).json({ error: 'Erro ao buscar itens' });
+    console.error('Erro ao criar um livro: ' + err);
+    res.status(500).json({ error: 'Erro ao criar um livro' });
   }
-})
+});
 
-app.get("/showlist", async (req, res) => {
+app.get('/listLivros', async (req, res) => {
   try {
-    const items = await Item.find();
-    res.json(items)
+    const livros = await Livro.find();
+    res.json(livros);
   } catch (error) {
-    console.log("dont show this itens")
-    res.status(400).json({message: "dont show itens"})
+    console.log('Erro ao buscar livros');
+    res.status(500).json({ message: 'Erro ao buscar livros' });
   }
-})
+});
 
-// Inicie o servidor Express
+app.post('/login', async (req, res) => {
+  try {
+    const { email, senha } = req.body;
+    if (!email || !senha) {
+      return res.status(400).json({ message: 'Informe o email e a senha' });
+    }
+    const usuario = await Usuario.findOne({ email });
+    if (!usuario) {
+      return res.status(401).json({ message: 'Usuário não encontrado' });
+    }
+    if (usuario.senha !== senha) {
+      return res.status(401).json({ message: 'Senha incorreta' });
+    }
+    res.json({ message: 'Login bem-sucedido' });
+
+  } catch (error) {
+    console.error('Erro ao fazer login: ' + error);
+    res.status(500).json({ error: 'Erro ao fazer login' });
+  }
+});
+
 app.listen(port, async () => {
   try {
     await connectDB();
