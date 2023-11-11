@@ -6,6 +6,8 @@ const { Livro, Pedido, Usuario } = require('./models');
 const app = express();
 app.use(express.json())
 
+
+
 const port = 3004;
 
 app.get('/', (req, res) => {
@@ -19,7 +21,8 @@ app.post('/createLivro', async (req, res) => {
     const novoLivro = new Livro({ title, description, author, data });
     await novoLivro.save();
     const livros = await Livro.find();
-    res.json(livros);
+    res.status(200).json(livros);
+
   } catch (err) {
     console.error('Erro ao criar um livro: ' + err);
     res.status(500).json({ error: 'Erro ao criar um livro' });
@@ -51,6 +54,28 @@ app.post('/login', async (req, res) => {
     }
     res.json({ message: 'Login bem-sucedido' });
 
+  } catch (error) {
+    console.error('Erro ao fazer login: ' + error);
+    res.status(500).json({ error: 'Erro ao fazer login' });
+  }
+});
+
+app.post('/cadastro', async (req, res) => {
+
+  console.log("response: ", res);
+
+  try {
+    const { email, senha, nome, dataCadastro } = req.body;
+    const usuario = await Usuario.findOne({ email });
+    if (usuario) {
+      res.status(401).json({message: 'Usuario já cadastrado'})
+    }
+     
+    const novoUsuario = new Usuario({nome, email, senha, dataCadastro})
+    await novoUsuario.save()
+
+    res.status(201).json(novoUsuario)
+    
   } catch (error) {
     console.error('Erro ao fazer login: ' + error);
     res.status(500).json({ error: 'Erro ao fazer login' });
